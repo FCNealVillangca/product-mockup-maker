@@ -239,6 +239,69 @@ export function generateDisplacementMap(
   return canvas;
 }
 
+/**
+ * Adjust a displacement map with Photoshop-style Levels control
+ * @param baseMap - The base displacement map to adjust
+ * @param invert - Invert the displacement (black<->white)
+ * @param inputBlack - Input black point (0-255)
+ * @param inputWhite - Input white point (0-255)
+ * @param gamma - Midtones/gamma adjustment (0.1-10, default 1.0)
+ */
+export function adjustDisplacementMap(
+  baseMap: HTMLCanvasElement,
+  invert: boolean,
+  inputBlack: number,
+  inputWhite: number,
+  gamma: number,
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = baseMap.width;
+  canvas.height = baseMap.height;
+
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return baseMap;
+
+  ctx.drawImage(baseMap, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  // Ensure inputBlack < inputWhite
+  const inBlack = Math.min(inputBlack, inputWhite - 1);
+  const inWhite = Math.max(inputWhite, inputBlack + 1);
+  const range = inWhite - inBlack;
+
+  for (let i = 0; i < data.length; i += 4) {
+    let val = data[i];
+    
+    // 1. Clamp to input range
+    val = Math.max(inBlack, Math.min(inWhite, val));
+    
+    // 2. Normalize to [0, 1]
+    let normalized = (val - inBlack) / range;
+    
+    // 3. Apply gamma (midtones adjustment)
+    normalized = Math.pow(normalized, 1 / gamma);
+    
+    // 4. Scale back to [0, 255]
+    val = normalized * 255;
+    
+    // 5. Apply invert if needed
+    if (invert) {
+      val = 255 - val;
+    }
+    
+    // Clamp final value
+    val = Math.max(0, Math.min(255, val));
+    
+    data[i] = val;
+    data[i + 1] = val;
+    data[i + 2] = val;
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
 function sampleDisplacement(
   dispMap: HTMLImageElement | HTMLCanvasElement,
   x: number,

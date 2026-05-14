@@ -23,6 +23,7 @@ export function ProductRenderer() {
     "/defaultshirt.avif",
   );
   const [designUrl, setDesignUrl] = useState<string | null>("/design.png");
+  const [displacementUrl, setDisplacementUrl] = useState<string | null>(null);
   const [useAutoDisplacement, setUseAutoDisplacement] = useState(true);
   const [displacementStrength, setDisplacementStrength] = useState(3);
   const [designOpacity, setDesignOpacity] = useState(100);
@@ -34,6 +35,7 @@ export function ProductRenderer() {
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
   const [designReady, setDesignReady] = useState(false);
   const [productReady, setProductReady] = useState(false);
+  const [displacementReady, setDisplacementReady] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -42,6 +44,7 @@ export function ProductRenderer() {
   const productCanvasRef = useRef<HTMLCanvasElement>(null);
   const designCanvasRef = useRef<HTMLCanvasElement>(null);
   const designImgRef = useRef<HTMLImageElement>(null);
+  const displacementImgRef = useRef<HTMLImageElement>(null);
   const generatedDispMapRef = useRef<HTMLCanvasElement | null>(null);
   const revokeLater = useRef<string[]>([]);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -133,17 +136,29 @@ export function ProductRenderer() {
     const dst = quadToPixel(quad, displaySize.w, displaySize.h);
 
     let dispOpts: DisplacementOptions | undefined;
-    if (displacementStrength > 0 && useAutoDisplacement && imgRef.current) {
-      if (!generatedDispMapRef.current) {
-        generatedDispMapRef.current = generateDisplacementMap(imgRef.current);
-      }
-      if (generatedDispMapRef.current) {
+    if (displacementStrength > 0) {
+      // Use custom displacement map if uploaded
+      if (displacementUrl && displacementImgRef.current && displacementReady) {
         dispOpts = {
-          map: generatedDispMapRef.current,
+          map: displacementImgRef.current,
           strength: displacementStrength,
           productWidth: displaySize.w,
           productHeight: displaySize.h,
         };
+      }
+      // Otherwise use auto-generated displacement
+      else if (useAutoDisplacement && imgRef.current) {
+        if (!generatedDispMapRef.current) {
+          generatedDispMapRef.current = generateDisplacementMap(imgRef.current);
+        }
+        if (generatedDispMapRef.current) {
+          dispOpts = {
+            map: generatedDispMapRef.current,
+            strength: displacementStrength,
+            productWidth: displaySize.w,
+            productHeight: displaySize.h,
+          };
+        }
       }
     }
 
@@ -159,6 +174,8 @@ export function ProductRenderer() {
     productReady,
     displaySize,
     designUrl,
+    displacementUrl,
+    displacementReady,
     displacementStrength,
     useAutoDisplacement,
     designOpacity,
@@ -299,17 +316,25 @@ export function ProductRenderer() {
       }));
 
       let dispOpts: DisplacementOptions | undefined;
-      if (
-        displacementStrength > 0 &&
-        useAutoDisplacement &&
-        generatedDispMapRef.current
-      ) {
-        dispOpts = {
-          map: generatedDispMapRef.current,
-          strength: displacementStrength * Math.max(scaleX, scaleY),
-          productWidth: img.naturalWidth,
-          productHeight: img.naturalHeight,
-        };
+      if (displacementStrength > 0) {
+        // Use custom displacement map if uploaded
+        if (displacementUrl && displacementImgRef.current && displacementReady) {
+          dispOpts = {
+            map: displacementImgRef.current,
+            strength: displacementStrength * Math.max(scaleX, scaleY),
+            productWidth: img.naturalWidth,
+            productHeight: img.naturalHeight,
+          };
+        }
+        // Otherwise use auto-generated displacement
+        else if (useAutoDisplacement && generatedDispMapRef.current) {
+          dispOpts = {
+            map: generatedDispMapRef.current,
+            strength: displacementStrength * Math.max(scaleX, scaleY),
+            productWidth: img.naturalWidth,
+            productHeight: img.naturalHeight,
+          };
+        }
       }
 
       ctx.globalAlpha = designOpacity / 100;
@@ -458,6 +483,39 @@ export function ProductRenderer() {
               </div>
             )}
           </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Or upload custom displacement map:
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFile(setDisplacementUrl, setDisplacementReady)}
+            />
+            <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
+              Grayscale image where black=push in, white=pull out. Create in Photoshop with Levels/Curves for full control.
+            </p>
+            {displacementUrl && (
+              <div className="mt-2">
+                <label className="flex items-center gap-3 text-sm">
+                  <span className="min-w-[90px] text-gray-700 dark:text-gray-300">
+                    Strength: {displacementStrength}
+                  </span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    value={displacementStrength}
+                    onChange={(e) =>
+                      setDisplacementStrength(Number(e.target.value))
+                    }
+                    className="flex-1"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
         </div>
       </fieldset>
 
@@ -514,6 +572,16 @@ export function ProductRenderer() {
                 alt=""
                 className="hidden"
                 onLoad={() => setDesignReady(true)}
+              />
+            )}
+            {displacementUrl && (
+              <img
+                key={displacementUrl}
+                ref={displacementImgRef}
+                src={displacementUrl}
+                alt=""
+                className="hidden"
+                onLoad={() => setDisplacementReady(true)}
               />
             )}
             {/* Product canvas - shirt only, NEVER moves */}
