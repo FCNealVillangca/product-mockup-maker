@@ -26,7 +26,12 @@ export const defaultVisualizerProducts: VisualizerProduct[] = [
     opacity: 70,
     art: {
       url: `${VISUALIZER_ASSET_BASE}/art.png`,
-      quad: [[0.3456, 0.2], [0.7256, 0.2], [0.7256, 0.58], [0.3456, 0.58]],
+      quad: [
+        [0.3456, 0.2],
+        [0.7256, 0.2],
+        [0.7256, 0.58],
+        [0.3456, 0.58],
+      ],
     },
   },
   {
@@ -38,7 +43,12 @@ export const defaultVisualizerProducts: VisualizerProduct[] = [
     opacity: 70,
     art: {
       url: `${VISUALIZER_ASSET_BASE}/art.png`,
-      quad: [[0.2535, 0.1826], [0.6538, 0.1517], [0.6903, 0.5351], [0.3195, 0.5857]],
+      quad: [
+        [0.2535, 0.1826],
+        [0.6538, 0.1517],
+        [0.6903, 0.5351],
+        [0.3195, 0.5857],
+      ],
     },
   },
   {
@@ -50,7 +60,12 @@ export const defaultVisualizerProducts: VisualizerProduct[] = [
     opacity: 70,
     art: {
       url: `${VISUALIZER_ASSET_BASE}/art.png`,
-      quad: [[0.5527, 0.2191], [0.9909, 0.3062], [0.568, 0.57], [0.1383, 0.4256]],
+      quad: [
+        [0.5527, 0.2191],
+        [0.9909, 0.3062],
+        [0.568, 0.57],
+        [0.1383, 0.4256],
+      ],
     },
   },
   {
@@ -62,7 +77,12 @@ export const defaultVisualizerProducts: VisualizerProduct[] = [
     opacity: 80,
     art: {
       url: `${VISUALIZER_ASSET_BASE}/art.png`,
-      quad: [[0.3153, 0.493], [0.7718, 0.4916], [0.7102, 0.8217], [0.3902, 0.8217]],
+      quad: [
+        [0.3153, 0.493],
+        [0.7718, 0.4916],
+        [0.7102, 0.8217],
+        [0.3902, 0.8217],
+      ],
     },
   },
 ];

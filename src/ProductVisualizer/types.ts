@@ -2,7 +2,12 @@
 export type ArtPosition = [number, number, number, number];
 
 /** Full quad: [TL, TR, BR, BL] each as [x, y] (0–1). Use instead of position for skewed shapes. */
-export type ArtQuad = [[number,number],[number,number],[number,number],[number,number]];
+export type ArtQuad = [
+  [number, number],
+  [number, number],
+  [number, number],
+  [number, number],
+];
 
 export type VisualizerProduct = {
   productName: string;
