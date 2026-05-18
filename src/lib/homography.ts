@@ -166,6 +166,24 @@ function solve3x3(
   return [A[0][3], A[1][3], A[2][3]];
 }
 
+/** Expands a triangle's points outward from its centroid by `px` pixels to close seam gaps. */
+function expandTri(
+  p0: Point,
+  p1: Point,
+  p2: Point,
+  px: number,
+): [Point, Point, Point] {
+  const cx = (p0.x + p1.x + p2.x) / 3;
+  const cy = (p0.y + p1.y + p2.y) / 3;
+  const push = (p: Point): Point => {
+    const dx = p.x - cx;
+    const dy = p.y - cy;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    return { x: p.x + (dx / len) * px, y: p.y + (dy / len) * px };
+  };
+  return [push(p0), push(p1), push(p2)];
+}
+
 function drawTexturedTriangle(
   ctx: CanvasRenderingContext2D,
   img: CanvasImageSource,
@@ -179,11 +197,14 @@ function drawTexturedTriangle(
   const t = affineFromTriangle(s0, s1, s2, d0, d1, d2);
   if (!t) return;
   const [a, b, c, d, e, f] = t;
+  // Expand clip region by 1px to eliminate sub-pixel seams between triangles
+  const [e0, e1, e2] = expandTri(d0, d1, d2, 1);
   ctx.save();
+  
   ctx.beginPath();
-  ctx.moveTo(d0.x, d0.y);
-  ctx.lineTo(d1.x, d1.y);
-  ctx.lineTo(d2.x, d2.y);
+  ctx.moveTo(e0.x, e0.y);
+  ctx.lineTo(e1.x, e1.y);
+  ctx.lineTo(e2.x, e2.y);
   ctx.closePath();
   ctx.clip();
   ctx.setTransform(a, b, c, d, e, f);
@@ -272,27 +293,27 @@ export function adjustDisplacementMap(
 
   for (let i = 0; i < data.length; i += 4) {
     let val = data[i];
-    
+
     // 1. Clamp to input range
     val = Math.max(inBlack, Math.min(inWhite, val));
-    
+
     // 2. Normalize to [0, 1]
     let normalized = (val - inBlack) / range;
-    
+
     // 3. Apply gamma (midtones adjustment)
     normalized = Math.pow(normalized, 1 / gamma);
-    
+
     // 4. Scale back to [0, 255]
     val = normalized * 255;
-    
+
     // 5. Apply invert if needed
     if (invert) {
       val = 255 - val;
     }
-    
+
     // Clamp final value
     val = Math.max(0, Math.min(255, val));
-    
+
     data[i] = val;
     data[i + 1] = val;
     data[i + 2] = val;
